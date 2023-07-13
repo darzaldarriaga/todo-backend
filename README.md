@@ -23,7 +23,7 @@ package.json - create-db property under scripts if you have different credential
 Once everything has been setup:
 Run the
 ```bash
-npm create-db
+npm run create-db
 ```
 command to initialize the database. (Note: It will ask for your PostgreSQL password)
 
