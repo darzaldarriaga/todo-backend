@@ -1,34 +1,57 @@
 const pool = require('../../taskdb');
 const queries = require('../tasks/queries');
+const supabase = require('../dbclient/supabase-client');
 
 const getTodoList = async () => {
-  const res = await pool.query(queries.getTodoList);
-  return res.rows;
+  const { data } = await supabase.from('tasks')
+    .select()
+    .is('is_done', false)
+    .is('deleted_at', null);
+  return data;
 };
 
 const getFinishedTasks = async () => {
-  const res = await pool.query(queries.getFinishedTasks);
-  return res.rows;
+  const { data } = await supabase.from('tasks')
+    .select()
+    .is('is_done', true)
+    .is('deleted_at', null)
+    .order('finished_at', { ascending: false })
+    .limit(10);
+  return data;
 };
 
 const addTask = async (task) => {
-  const res = await pool.query(queries.addTask, [task]);
-  return res.rows;
+  const { data, error } = await supabase.from('tasks')
+    .insert({ task });
+  return data;
 };
 
 const updateTask = async (id, is_done) => {
-  const res = await pool.query(queries.updateTask, [id, is_done]);
-  return res.rows;
+  const finished_at = is_done
+    ? new Date().toISOString()
+    : null;
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ is_done: is_done, finished_at: finished_at })
+    .eq('id', id)
+    .select();
+  return data;
 }
 
 const deleteAllTasks = async () => {
-  const res = await pool.query(queries.deleteAllTasks);
-  return res.rows;
+  const { data } = await supabase.from('tasks')
+    .update({ deleted_at: new Date().toISOString() })
+    .is('deleted_at', null);
+  return data;
 };
 
 const searchTasks = async (term, is_done) => {
-  const res = await pool.query(queries.searchTasks, [ term, is_done ]);
-  return res.rows;
+  const { data, error } = await supabase
+    .from('tasks')
+    .select()
+    .ilike('task', `%${term}%`)
+    .is('is_done', is_done);
+  return data;
 };
 
 const Service = () => {
